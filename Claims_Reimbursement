@@ -1,0 +1,94 @@
+import pandas as pd
+import random
+from datetime import datetime, timedelta
+import numpy as np
+
+# Load existing datasets
+try:
+    hcp_df = pd.read_excel("C:/Users/chefn/OneDrive/Documents/Impiricus Project/HCP_Demographics.xlsx")
+    prescriptions_df = pd.read_excel("C:/Users/chefn/OneDrive/Documents/Impiricus Project/Prescriptionss.xlsx")
+except Exception as e:
+    print(f"Error loading datasets: {e}")
+    exit()
+
+def generate_claims_data(num_claims=1000000):
+    current_date = datetime(2025, 1, 9)
+    claims = []
+    
+    # Get unique prescription IDs and their details
+    prescriptions = prescriptions_df[['Prescription_ID', 'Prescriber_NPI', 'Patient_ID', 
+                                    'Drug_NDC', 'Drug_Name', 'Prescription_DateTime']].values
+    
+    print(f"Generating {num_claims} claims...")
+    
+    for i, prescription in enumerate(prescriptions):
+        if i % 100000 == 0:
+            print(f"Generated {i} claims...")
+            
+        # In the generate_claims_data function, modify the rx_date conversion:
+        rx_date = pd.to_datetime(prescription[5]).to_pydatetime()
+        
+        # Generate realistic claim dates
+        claim_date = rx_date + timedelta(days=random.randint(0, 3))
+        payment_date = claim_date + timedelta(days=random.randint(7, 30))
+        
+        # Generate realistic financial amounts
+        billed_amount = random.uniform(100, 1000)
+        allowed_amount = billed_amount * random.uniform(0.4, 0.8)
+        copay = random.choice([0, 10, 20, 30, 40, 50])
+        paid_amount = allowed_amount - copay
+        write_off = billed_amount - allowed_amount
+        
+        # Determine claim status and payer info
+        claim_status = random.choices(
+            ["Paid", "Denied", "Pending", "Partial Pay"],
+            weights=[80, 10, 5, 5]
+        )[0]
+        
+        primary_payer = random.choices(
+            ["Medicare", "Medicaid", "Commercial", "Self-Pay"],
+            weights=[30, 20, 45, 5]
+        )[0]
+        
+        claims.append({
+            "Claim_ID": f"CLM{random.randint(10000000, 99999999)}",
+            "Prescription_ID": prescription[0],
+            "Patient_ID": prescription[2],
+            "Provider_NPI": prescription[1],
+            "Date_of_Service": rx_date.strftime("%Y-%m-%d"),
+            "Date_of_Claim": claim_date.strftime("%Y-%m-%d"),
+            "Date_of_Payment": payment_date.strftime("%Y-%m-%d"),
+            "Claim_Status": claim_status,
+            "Billed_Amount": round(billed_amount, 2),
+            "Allowed_Amount": round(allowed_amount, 2),
+            "Paid_Amount": round(paid_amount, 2),
+            "Patient_Responsibility": copay,
+            "Write_Off_Amount": round(write_off, 2),
+            "Primary_Payer": primary_payer,
+            "Secondary_Payer": "None" if random.random() > 0.15 else random.choice(["Medicare", "Commercial"]),
+            "Plan_Type": random.choice(["HMO", "PPO", "EPO", "POS"]),
+            "Prior_Authorization": random.choice(["Required", "Not Required"]),
+            "Place_of_Service": random.choice(["Retail Pharmacy", "Mail Order", "Specialty Pharmacy"]),
+            "Service_Code": prescription[3],  # NDC Code
+            "Diagnosis_Codes": f"ICD10-{random.randint(1000, 9999)}",
+            "Denial_Reason": "" if claim_status != "Denied" else random.choice([
+                "Prior Authorization Required",
+                "Non-Formulary Drug",
+                "Coverage Terminated",
+                "Medical necessity documentation missing"
+            ]),
+            "Appeal_Status": "" if claim_status != "Denied" else random.choices(
+    ["Appeal Approved", "Appeal Pending", "Not Appealed", "Appeal Denied"],
+    weights=[40, 30, 20, 10],  # Totals 100%
+    )[0],
+        })
+    
+    return pd.DataFrame(claims)
+
+# Generate and save the dataset
+try:
+    claims_df = generate_claims_data()
+    claims_df.to_csv("C:/Program Files/Excel Files/Claims_Reimbursement.csv", index=False)
+    print("Successfully generated claims and reimbursement dataset")
+except Exception as e:
+    print(f"Error generating claims: {e}")
