@@ -1,0 +1,484 @@
+import pandas as pd
+import random
+from datetime import datetime, timedelta
+
+# Load the Healthcare Provider Demographics Dataset
+providers_df = pd.read_excel("C:/Users/chefn/OneDrive/Documents/Impiricus Project/HCP_Demographics.xlsx")
+active_providers = providers_df[providers_df['Practice_Status'] == 'Active']
+
+# Your existing drugs dictionary remains the same
+drugs = {
+    'Primary Care': {
+        'Family Medicine': [
+            {"NDC": "00093-0058-98", "Name": "Amoxicillin", "Type": "Antibiotic", "Common_Quantity": [20, 30]},
+            {"NDC": "00378-0618-01", "Name": "Lisinopril", "Type": "ACE Inhibitor", "Common_Quantity": [30, 90]},
+            {"NDC": "00071-0156-23", "Name": "Metformin", "Type": "Antidiabetic", "Common_Quantity": [60, 90]},
+            {"NDC": "00071-0156-40", "Name": "Atorvastatin", "Type": "Statin", "Common_Quantity": [30, 90]},
+            {"NDC": "00093-0058-01", "Name": "Metoprolol", "Type": "Beta Blocker", "Common_Quantity": [30, 90]},
+            {"NDC": "00378-0618-05", "Name": "Omeprazole", "Type": "PPI", "Common_Quantity": [30, 90]},
+            {"NDC": "00093-0058-06", "Name": "Amlodipine", "Type": "CCB", "Common_Quantity": [30, 90]},
+            {"NDC": "00071-0156-07", "Name": "Sertraline", "Type": "SSRI", "Common_Quantity": [30, 90]}
+        ],
+        'Internal Medicine': [
+            {"NDC": "00093-0059-98", "Name": "Losartan", "Type": "ARB", "Common_Quantity": [30, 90]},
+            {"NDC": "00378-0619-01", "Name": "Pantoprazole", "Type": "PPI", "Common_Quantity": [30, 90]},
+            {"NDC": "00071-0157-23", "Name": "Levothyroxine", "Type": "Thyroid", "Common_Quantity": [30, 90]},
+            {"NDC": "00093-0060-98", "Name": "Rosuvastatin", "Type": "Statin", "Common_Quantity": [30, 90]},
+            {"NDC": "00378-0620-01", "Name": "Escitalopram", "Type": "SSRI", "Common_Quantity": [30, 90]},
+            {"NDC": "00071-0158-23", "Name": "Gabapentin", "Type": "Anticonvulsant", "Common_Quantity": [90, 180]}
+        ],
+        'Pediatrics': [
+            {"NDC": "00093-0061-98", "Name": "Amoxicillin-Clavulanate", "Type": "Antibiotic", "Common_Quantity": [10, 20]},
+            {"NDC": "00378-0621-01", "Name": "Albuterol", "Type": "Bronchodilator", "Common_Quantity": [1, 2]},
+            {"NDC": "00071-0159-23", "Name": "Fluticasone", "Type": "Corticosteroid", "Common_Quantity": [1, 2]},
+            {"NDC": "00093-0062-98", "Name": "Methylphenidate", "Type": "ADHD", "Common_Quantity": [30, 60]},
+            {"NDC": "00378-0622-01", "Name": "Cetirizine", "Type": "Antihistamine", "Common_Quantity": [30, 90]}
+        ],
+        'Geriatric Medicine': [
+            {"NDC": "00093-0063-98", "Name": "Donepezil", "Type": "Alzheimer's", "Common_Quantity": [30, 90]},
+            {"NDC": "00378-0623-01", "Name": "Memantine", "Type": "Alzheimer's", "Common_Quantity": [30, 90]},
+            {"NDC": "00071-0160-23", "Name": "Rivastigmine", "Type": "Alzheimer's", "Common_Quantity": [30, 90]},
+            {"NDC": "00093-0064-98", "Name": "Galantamine", "Type": "Alzheimer's", "Common_Quantity": [30, 90]},
+            {"NDC": "00378-0624-01", "Name": "Quetiapine", "Type": "Antipsychotic", "Common_Quantity": [30, 90]}
+        ],
+        'Preventive Medicine': [
+            {"NDC": "00093-0065-98", "Name": "Varenicline", "Type": "Smoking Cessation", "Common_Quantity": [30, 60]},
+            {"NDC": "00378-0625-01", "Name": "Bupropion", "Type": "Antidepressant", "Common_Quantity": [30, 90]},
+            {"NDC": "00071-0161-23", "Name": "Naltrexone", "Type": "Addiction", "Common_Quantity": [30, 90]}
+        ],
+        'Adolescent Medicine': [
+            {"NDC": "00093-0066-98", "Name": "Isotretinoin", "Type": "Acne", "Common_Quantity": [30, 60]},
+            {"NDC": "00378-0626-01", "Name": "Drospirenone-Ethinyl Estradiol", "Type": "Contraceptive", "Common_Quantity": [28, 84]},
+            {"NDC": "00071-0162-23", "Name": "Desogestrel-Ethinyl Estradiol", "Type": "Contraceptive", "Common_Quantity": [28, 84]}
+        ]
+},
+    'Specialists': {
+        'Cardiology': [
+            {"NDC": "00093-0070-98", "Name": "Atorvastatin", "Type": "Statin", "Common_Quantity": [30, 90]},
+            {"NDC": "00378-0630-01", "Name": "Clopidogrel", "Type": "Antiplatelet", "Common_Quantity": [30, 90]},
+            {"NDC": "00071-0163-23", "Name": "Warfarin", "Type": "Anticoagulant", "Common_Quantity": [30, 90]},
+            {"NDC": "00093-0071-98", "Name": "Metoprolol", "Type": "Beta Blocker", "Common_Quantity": [30, 90]},
+            {"NDC": "00378-0631-01", "Name": "Amlodipine", "Type": "CCB", "Common_Quantity": [30, 90]},
+            {"NDC": "00093-0082-98", "Name": "Apixaban", "Type": "Anticoagulant", "Common_Quantity": [60, 90]},
+            {"NDC": "00378-0642-01", "Name": "Rivaroxaban", "Type": "Anticoagulant", "Common_Quantity": [30, 90]}
+        ],
+        'Dermatology': [
+            {"NDC": "00093-0072-98", "Name": "Isotretinoin", "Type": "Acne", "Common_Quantity": [30, 60]},
+            {"NDC": "00378-0632-01", "Name": "Clobetasol", "Type": "Corticosteroid", "Common_Quantity": [15, 30]},
+            {"NDC": "00071-0164-23", "Name": "Adapalene", "Type": "Retinoid", "Common_Quantity": [15, 30]},
+            {"NDC": "00093-0073-98", "Name": "Hydroquinone", "Type": "Skin Lightening", "Common_Quantity": [15, 30]},
+            {"NDC": "00378-0633-01", "Name": "Tacrolimus", "Type": "Immunosuppressant", "Common_Quantity": [15, 30]}
+        ],
+        'Endocrinology': [
+            {"NDC": "00093-0074-98", "Name": "Levothyroxine", "Type": "Thyroid", "Common_Quantity": [30, 90]},
+            {"NDC": "00378-0634-01", "Name": "Metformin", "Type": "Antidiabetic", "Common_Quantity": [60, 90]},
+            {"NDC": "00071-0165-23", "Name": "Insulin Glargine", "Type": "Insulin", "Common_Quantity": [1, 3]},
+            {"NDC": "00093-0075-98", "Name": "Sitagliptin", "Type": "DPP-4 Inhibitor", "Common_Quantity": [30, 90]},
+            {"NDC": "00378-0635-01", "Name": "Canagliflozin", "Type": "SGLT2 Inhibitor", "Common_Quantity": [30, 90]}
+        ],
+        'Gastroenterology': [
+            {"NDC": "00093-0076-98", "Name": "Pantoprazole", "Type": "PPI", "Common_Quantity": [30, 90]},
+            {"NDC": "00378-0636-01", "Name": "Omeprazole", "Type": "PPI", "Common_Quantity": [30, 90]},
+            {"NDC": "00071-0166-23", "Name": "Mesalamine", "Type": "Anti-inflammatory", "Common_Quantity": [30, 90]},
+            {"NDC": "00093-0077-98", "Name": "Rifaximin", "Type": "Antibiotic", "Common_Quantity": [10, 20]},
+            {"NDC": "00378-0637-01", "Name": "Ursodiol", "Type": "Gallstone Treatment", "Common_Quantity": [30, 90]}
+        ],
+        'Nephrology': [
+            {"NDC": "00093-0083-98", "Name": "Furosemide", "Type": "Loop Diuretic", "Common_Quantity": [30, 90]},
+            {"NDC": "00378-0643-01", "Name": "Spironolactone", "Type": "Potassium-sparing Diuretic", "Common_Quantity": [30, 90]},
+            {"NDC": "00071-0169-23", "Name": "Cinacalcet", "Type": "Calcimimetic", "Common_Quantity": [30, 90]}
+        ],
+        'Neurology': [
+            {"NDC": "00093-0084-98", "Name": "Levetiracetam", "Type": "Anticonvulsant", "Common_Quantity": [60, 90]},
+            {"NDC": "00378-0644-01", "Name": "Topiramate", "Type": "Anticonvulsant", "Common_Quantity": [30, 90]},
+            {"NDC": "00071-0170-23", "Name": "Sumatriptan", "Type": "Antimigraine", "Common_Quantity": [9, 18]}
+        ],
+        'Oncology': [
+            {"NDC": "00093-0085-98", "Name": "Anastrozole", "Type": "Hormone Therapy", "Common_Quantity": [30, 90]},
+            {"NDC": "00378-0645-01", "Name": "Tamoxifen", "Type": "Hormone Therapy", "Common_Quantity": [30, 90]},
+            {"NDC": "00071-0171-23", "Name": "Ondansetron", "Type": "Antiemetic", "Common_Quantity": [30, 90]}
+        ],
+        'Pulmonology': [
+            {"NDC": "00093-0086-98", "Name": "Fluticasone/Salmeterol", "Type": "Inhaled Corticosteroid/LABA", "Common_Quantity": [1, 3]},
+            {"NDC": "00378-0646-01", "Name": "Tiotropium", "Type": "LAMA", "Common_Quantity": [1, 3]},
+            {"NDC": "00071-0172-23", "Name": "Montelukast", "Type": "Leukotriene Modifier", "Common_Quantity": [30, 90]}
+        ],
+        'Rheumatology': [
+            {"NDC": "00093-0087-98", "Name": "Methotrexate", "Type": "DMARD", "Common_Quantity": [4, 8]},
+            {"NDC": "00378-0647-01", "Name": "Hydroxychloroquine", "Type": "DMARD", "Common_Quantity": [60, 90]},
+            {"NDC": "00071-0173-23", "Name": "Prednisone", "Type": "Corticosteroid", "Common_Quantity": [30, 90]}
+        ],
+        'Physical Medicine and Rehabilitation': [
+            {"NDC": "00093-0088-98", "Name": "Baclofen", "Type": "Muscle Relaxant", "Common_Quantity": [60, 90]},
+            {"NDC": "00378-0648-01", "Name": "Cyclobenzaprine", "Type": "Muscle Relaxant", "Common_Quantity": [30, 90]},
+            {"NDC": "00071-0174-23", "Name": "Gabapentin", "Type": "Nerve Pain", "Common_Quantity": [90, 180]}
+        ],
+        'Sleep Medicine': [
+            {"NDC": "00093-0089-98", "Name": "Zolpidem", "Type": "Sedative", "Common_Quantity": [30, 30]},
+            {"NDC": "00378-0649-01", "Name": "Modafinil", "Type": "Wakefulness Promoter", "Common_Quantity": [30, 30]},
+            {"NDC": "00071-0175-23", "Name": "Suvorexant", "Type": "Orexin Receptor Antagonist", "Common_Quantity": [30, 30]}
+        ],
+        'Sports Medicine': [
+            {"NDC": "00093-0090-98", "Name": "Celecoxib", "Type": "NSAID", "Common_Quantity": [30, 90]},
+            {"NDC": "00378-0650-01", "Name": "Meloxicam", "Type": "NSAID", "Common_Quantity": [30, 90]},
+            {"NDC": "00071-0176-23", "Name": "Methylprednisolone", "Type": "Corticosteroid", "Common_Quantity": [21, 21]}
+        ],
+            'Hematology': [
+            {"NDC": "00093-0091-98", "Name": "Warfarin", "Type": "Anticoagulant", "Common_Quantity": [30, 90]},
+            {"NDC": "00378-0651-01", "Name": "Apixaban", "Type": "Anticoagulant", "Common_Quantity": [60, 90]},
+            {"NDC": "00071-0177-23", "Name": "Dabigatran", "Type": "Anticoagulant", "Common_Quantity": [60, 90]},
+            {"NDC": "00093-0092-98", "Name": "Rivaroxaban", "Type": "Anticoagulant", "Common_Quantity": [30, 90]},
+            {"NDC": "00378-0652-01", "Name": "Enoxaparin", "Type": "Anticoagulant", "Common_Quantity": [10, 30]},
+            {"NDC": "00071-0178-23", "Name": "Fondaparinux", "Type": "Anticoagulant", "Common_Quantity": [10, 30]},
+            {"NDC": "00093-0093-98", "Name": "Clopidogrel", "Type": "Antiplatelet", "Common_Quantity": [30, 90]},
+            {"NDC": "00378-0653-01", "Name": "Ticagrelor", "Type": "Antiplatelet", "Common_Quantity": [60, 90]},
+            {"NDC": "00071-0179-23", "Name": "Cilostazol", "Type": "Antiplatelet", "Common_Quantity": [60, 90]},
+            {"NDC": "00093-0094-98", "Name": "Imatinib", "Type": "Leukemia", "Common_Quantity": [30, 90]},
+            {"NDC": "00378-0654-01", "Name": "Dasatinib", "Type": "Leukemia", "Common_Quantity": [30, 90]},
+            {"NDC": "00071-0180-23", "Name": "Nilotinib", "Type": "Leukemia", "Common_Quantity": [30, 90]}
+        ],
+        'Infectious Disease': [
+            {"NDC": "00093-0095-98", "Name": "Amoxicillin", "Type": "Antibiotic", "Common_Quantity": [20, 30]},
+            {"NDC": "00378-0655-01", "Name": "Doxycycline", "Type": "Antibiotic", "Common_Quantity": [20, 30]},
+            {"NDC": "00071-0181-23", "Name": "Azithromycin", "Type": "Antibiotic", "Common_Quantity": [5, 6]},
+            {"NDC": "00093-0096-98", "Name": "Ciprofloxacin", "Type": "Antibiotic", "Common_Quantity": [14, 20]},
+            {"NDC": "00378-0656-01", "Name": "Levofloxacin", "Type": "Antibiotic", "Common_Quantity": [7, 14]},
+            {"NDC": "00071-0182-23", "Name": "Fluconazole", "Type": "Antifungal", "Common_Quantity": [1, 14]},
+            {"NDC": "00093-0097-98", "Name": "Voriconazole", "Type": "Antifungal", "Common_Quantity": [14, 30]},
+            {"NDC": "00378-0657-01", "Name": "Valacyclovir", "Type": "Antiviral", "Common_Quantity": [30, 90]},
+            {"NDC": "00071-0183-23", "Name": "Oseltamivir", "Type": "Antiviral", "Common_Quantity": [10, 10]},
+            {"NDC": "00093-0098-98", "Name": "Ivermectin", "Type": "Antiparasitic", "Common_Quantity": [4, 8]},
+            {"NDC": "00378-0658-01", "Name": "Praziquantel", "Type": "Antiparasitic", "Common_Quantity": [6, 12]},
+            {"NDC": "00071-0184-23", "Name": "Albendazole", "Type": "Antiparasitic", "Common_Quantity": [4, 8]}
+        ]
+}
+,
+    'Surgical Specialties': {
+        'General Surgery': [
+            {"NDC": "00093-0100-98", "Name": "Cefamandole", "Type": "Prophylactic Antibiotic", "Common_Quantity": [1, 2]},
+            {"NDC": "00378-0660-01", "Name": "Dalteparin", "Type": "Anticoagulant", "Common_Quantity": [1, 10]},
+            {"NDC": "00071-0185-23", "Name": "Glycopyrronium", "Type": "Anticholinergic", "Common_Quantity": [1, 5]},
+            {"NDC": "00093-0101-98", "Name": "Taurolidine", "Type": "Antimicrobial", "Common_Quantity": [1, 2]},
+            {"NDC": "00378-0661-01", "Name": "Tinzaparin", "Type": "Anticoagulant", "Common_Quantity": [1, 10]}
+        ],
+        'Orthopedic Surgery': [
+            {"NDC": "00409-3793-01", "Name": "Ketorolac", "Type": "NSAID", "Common_Quantity": [1, 2]},
+            {"NDC": "47426-301-02", "Name": "Bupivacaine/Meloxicam", "Type": "Local Anesthetic/NSAID", "Common_Quantity": [1, 2]},
+            {"NDC": "00093-0102-98", "Name": "Tranexamic Acid", "Type": "Antifibrinolytic", "Common_Quantity": [1, 2]},
+            {"NDC": "00378-0662-01", "Name": "Ropivacaine", "Type": "Local Anesthetic", "Common_Quantity": [1, 2]},
+            {"NDC": "00071-0186-23", "Name": "Methylprednisolone", "Type": "Corticosteroid", "Common_Quantity": [1, 2]}
+        ],
+        'Neurosurgery': [
+            {"NDC": "00093-0103-98", "Name": "Phenytoin", "Type": "Anticonvulsant", "Common_Quantity": [1, 5]},
+            {"NDC": "00378-0663-01", "Name": "Levetiracetam", "Type": "Anticonvulsant", "Common_Quantity": [1, 5]},
+            {"NDC": "00071-0187-23", "Name": "Mannitol", "Type": "Osmotic Diuretic", "Common_Quantity": [1, 2]},
+            {"NDC": "00093-0104-98", "Name": "Dexamethasone", "Type": "Corticosteroid", "Common_Quantity": [1, 5]},
+            {"NDC": "00378-0664-01", "Name": "Carbamazepine", "Type": "Anticonvulsant", "Common_Quantity": [1, 5]}
+        ],
+        'Plastic Surgery': [
+            {"NDC": "00023-3919-50", "Name": "Onabotulinumtoxin A", "Type": "Neurotoxin", "Common_Quantity": [1, 1]},
+            {"NDC": "00093-0105-98", "Name": "Lidocaine with Epinephrine", "Type": "Local Anesthetic", "Common_Quantity": [1, 5]},
+            {"NDC": "00378-0665-01", "Name": "Cefazolin", "Type": "Antibiotic", "Common_Quantity": [1, 2]},
+            {"NDC": "00071-0188-23", "Name": "Hyaluronidase", "Type": "Enzyme", "Common_Quantity": [1, 2]}
+        ],
+        'Thoracic Surgery': [
+            {"NDC": "00093-0106-98", "Name": "Heparin", "Type": "Anticoagulant", "Common_Quantity": [1, 5]},
+            {"NDC": "00378-0666-01", "Name": "Protamine", "Type": "Anticoagulant Reversal", "Common_Quantity": [1, 2]},
+            {"NDC": "00071-0189-23", "Name": "Milrinone", "Type": "Inotrope", "Common_Quantity": [1, 2]}
+        ],
+        'Vascular Surgery': [
+            {"NDC": "00093-0107-98", "Name": "Alteplase", "Type": "Thrombolytic", "Common_Quantity": [1, 2]},
+            {"NDC": "00378-0667-01", "Name": "Bivalirudin", "Type": "Anticoagulant", "Common_Quantity": [1, 2]},
+            {"NDC": "00071-0190-23", "Name": "Cilostazol", "Type": "Antiplatelet", "Common_Quantity": [30, 60]}
+        ],
+        'Pediatric Surgery': [
+            {"NDC": "00093-0108-98", "Name": "Midazolam", "Type": "Sedative", "Common_Quantity": [1, 5]},
+            {"NDC": "00378-0668-01", "Name": "Propofol", "Type": "Anesthetic", "Common_Quantity": [1, 2]},
+            {"NDC": "00071-0191-23", "Name": "Rocuronium", "Type": "Muscle Relaxant", "Common_Quantity": [1, 2]}
+        ],
+        'Colon and Rectal Surgery': [
+            {"NDC": "00093-0109-98", "Name": "Metronidazole", "Type": "Antibiotic", "Common_Quantity": [1, 14]},
+            {"NDC": "00378-0669-01", "Name": "Alvimopan", "Type": "Opioid Antagonist", "Common_Quantity": [1, 15]},
+            {"NDC": "00071-0192-23", "Name": "Hydrocortisone", "Type": "Corticosteroid", "Common_Quantity": [1, 1]}
+        ],
+        'Surgical Oncology': [
+            {"NDC": "00093-0110-98", "Name": "Oxaliplatin", "Type": "Chemotherapy", "Common_Quantity": [1, 1]},
+            {"NDC": "00378-0670-01", "Name": "Irinotecan", "Type": "Chemotherapy", "Common_Quantity": [1, 1]},
+            {"NDC": "00071-0193-23", "Name": "Bevacizumab", "Type": "Targeted Therapy", "Common_Quantity": [1, 1]},
+            {"NDC": "00093-0111-98", "Name": "Cetuximab", "Type": "Targeted Therapy", "Common_Quantity": [1, 1]}
+        ]
+    }
+    ,
+        'Behavioral Health': {
+        'Psychiatry': [
+            {"NDC": "00093-0120-98", "Name": "Fluoxetine", "Type": "SSRI", "Common_Quantity": [30, 90]},
+            {"NDC": "00378-0680-01", "Name": "Sertraline", "Type": "SSRI", "Common_Quantity": [30, 90]},
+            {"NDC": "00071-0194-23", "Name": "Escitalopram", "Type": "SSRI", "Common_Quantity": [30, 90]},
+            {"NDC": "00093-0121-98", "Name": "Quetiapine", "Type": "Atypical Antipsychotic", "Common_Quantity": [30, 90]},
+            {"NDC": "00378-0681-01", "Name": "Olanzapine", "Type": "Atypical Antipsychotic", "Common_Quantity": [30, 90]},
+            {"NDC": "00071-0195-23", "Name": "Aripiprazole", "Type": "Atypical Antipsychotic", "Common_Quantity": [30, 90]},
+            {"NDC": "00093-0122-98", "Name": "Risperidone", "Type": "Atypical Antipsychotic", "Common_Quantity": [30, 90]}
+        ],
+        'Child and Adolescent Psychiatry': [
+            {"NDC": "00093-0123-98", "Name": "Methylphenidate", "Type": "Stimulant", "Common_Quantity": [30, 90]},
+            {"NDC": "00378-0682-01", "Name": "Atomoxetine", "Type": "Non-Stimulant ADHD", "Common_Quantity": [30, 90]},
+            {"NDC": "00071-0196-23", "Name": "Guanfacine", "Type": "Alpha-2 Agonist", "Common_Quantity": [30, 90]},
+            {"NDC": "00093-0124-98", "Name": "Clonidine", "Type": "Alpha-2 Agonist", "Common_Quantity": [30, 90]},
+            {"NDC": "00378-0683-01", "Name": "Lisdexamfetamine", "Type": "Stimulant", "Common_Quantity": [30, 30]}
+        ],
+        'Addiction Medicine': [
+            {"NDC": "00093-0125-98", "Name": "Buprenorphine", "Type": "Opioid Treatment", "Common_Quantity": [30, 90]},
+            {"NDC": "00378-0684-01", "Name": "Naltrexone", "Type": "Opioid Antagonist", "Common_Quantity": [30, 30]},
+            {"NDC": "00071-0197-23", "Name": "Acamprosate", "Type": "Alcohol Dependence", "Common_Quantity": [90, 90]},
+            {"NDC": "00093-0126-98", "Name": "Disulfiram", "Type": "Alcohol Deterrent", "Common_Quantity": [30, 90]},
+            {"NDC": "00378-0685-01", "Name": "Methadone", "Type": "Opioid Treatment", "Common_Quantity": [30, 90]}
+        ],
+        'Neuropsychiatry': [
+            {"NDC": "00093-0127-98", "Name": "Donepezil", "Type": "Cholinesterase Inhibitor", "Common_Quantity": [30, 90]},
+            {"NDC": "00378-0686-01", "Name": "Memantine", "Type": "NMDA Antagonist", "Common_Quantity": [30, 90]},
+            {"NDC": "00071-0198-23", "Name": "Rivastigmine", "Type": "Cholinesterase Inhibitor", "Common_Quantity": [30, 90]},
+            {"NDC": "00093-0128-98", "Name": "Galantamine", "Type": "Cholinesterase Inhibitor", "Common_Quantity": [30, 90]}
+        ]
+}
+,
+    'Women\'s Health': {
+        'Obstetrics and Gynecology': [
+            {"NDC": "00093-0130-98", "Name": "Oxytocin", "Type": "Labor Induction", "Common_Quantity": [1, 2]},
+            {"NDC": "00378-0690-01", "Name": "Misoprostol", "Type": "Cervical Ripening", "Common_Quantity": [1, 4]},
+            {"NDC": "00071-0200-23", "Name": "Dinoprostone", "Type": "Cervical Ripening", "Common_Quantity": [1, 2]},
+            {"NDC": "00093-0131-98", "Name": "Carboprost", "Type": "Postpartum Hemorrhage", "Common_Quantity": [1, 2]},
+            {"NDC": "00378-0691-01", "Name": "Methylergonovine", "Type": "Postpartum Hemorrhage", "Common_Quantity": [1, 2]},
+            {"NDC": "00093-0132-98", "Name": "Ondansetron", "Type": "Antiemetic", "Common_Quantity": [30, 60]}
+        ],
+        'Reproductive Endocrinology': [
+            {"NDC": "00093-0133-98", "Name": "Clomiphene", "Type": "Ovulation Induction", "Common_Quantity": [5, 10]},
+            {"NDC": "00378-0692-01", "Name": "Letrozole", "Type": "Ovulation Induction", "Common_Quantity": [5, 10]},
+            {"NDC": "00071-0201-23", "Name": "Follitropin", "Type": "FSH", "Common_Quantity": [1, 5]},
+            {"NDC": "00093-0134-98", "Name": "Menopur", "Type": "hMG", "Common_Quantity": [1, 5]},
+            {"NDC": "00378-0693-01", "Name": "Ganirelix", "Type": "GnRH Antagonist", "Common_Quantity": [1, 5]},
+            {"NDC": "00071-0202-23", "Name": "Choriogonadotropin", "Type": "hCG", "Common_Quantity": [1, 2]}
+        ],
+        'Maternal-Fetal Medicine': [
+            {"NDC": "00093-0135-98", "Name": "Betamethasone", "Type": "Fetal Lung Maturation", "Common_Quantity": [2, 4]},
+            {"NDC": "00378-0694-01", "Name": "Magnesium Sulfate", "Type": "Preeclampsia", "Common_Quantity": [1, 4]},
+            {"NDC": "00071-0203-23", "Name": "Terbutaline", "Type": "Tocolytic", "Common_Quantity": [1, 2]},
+            {"NDC": "00093-0136-98", "Name": "Nifedipine", "Type": "Tocolytic", "Common_Quantity": [30, 90]},
+            {"NDC": "00378-0695-01", "Name": "Indomethacin", "Type": "Tocolytic", "Common_Quantity": [30, 60]}
+        ],
+        'Gynecologic Oncology': [
+            {"NDC": "00093-0137-98", "Name": "Bevacizumab", "Type": "Targeted Therapy", "Common_Quantity": [1, 2]},
+            {"NDC": "00378-0696-01", "Name": "Olaparib", "Type": "PARP Inhibitor", "Common_Quantity": [30, 90]},
+            {"NDC": "00071-0204-23", "Name": "Pembrolizumab", "Type": "Immunotherapy", "Common_Quantity": [1, 2]},
+            {"NDC": "00093-0138-98", "Name": "Tisotumab Vedotin", "Type": "ADC", "Common_Quantity": [1, 2]},
+            {"NDC": "00378-0697-01", "Name": "Mirvetuximab Soravtansine", "Type": "ADC", "Common_Quantity": [1, 2]},
+            {"NDC": "00071-0205-23", "Name": "Niraparib", "Type": "PARP Inhibitor", "Common_Quantity": [30, 90]}
+        ]
+    }
+    ,
+        'Diagnostic Medicine': {
+        'Diagnostic Radiology': [
+            {"NDC": "00093-0140-98", "Name": "Iohexol", "Type": "Non-ionic Contrast", "Common_Quantity": [1, 2]},
+            {"NDC": "00378-0700-01", "Name": "Iopamidol", "Type": "Non-ionic Contrast", "Common_Quantity": [1, 2]},
+            {"NDC": "00071-0210-23", "Name": "Iodixanol", "Type": "Non-ionic Contrast", "Common_Quantity": [1, 2]},
+            {"NDC": "00093-0141-98", "Name": "Gadodiamide", "Type": "MRI Contrast", "Common_Quantity": [1, 1]},
+            {"NDC": "00378-0701-01", "Name": "Gadobutrol", "Type": "MRI Contrast", "Common_Quantity": [1, 1]},
+            {"NDC": "00071-0211-23", "Name": "Barium Sulfate", "Type": "GI Contrast", "Common_Quantity": [1, 1]}
+        ],
+        'Nuclear Medicine': [
+            {"NDC": "00093-0142-98", "Name": "Technetium-99m", "Type": "Diagnostic Radiopharmaceutical", "Common_Quantity": [1, 1]},
+            {"NDC": "00378-0702-01", "Name": "Fluorine-18 FDG", "Type": "PET Imaging", "Common_Quantity": [1, 1]},
+            {"NDC": "00071-0212-23", "Name": "Iodine-131", "Type": "Thyroid Imaging", "Common_Quantity": [1, 1]},
+            {"NDC": "00093-0143-98", "Name": "Gallium-67", "Type": "Tumor Imaging", "Common_Quantity": [1, 1]},
+            {"NDC": "00378-0703-01", "Name": "Thallium-201", "Type": "Cardiac Imaging", "Common_Quantity": [1, 1]},
+            {"NDC": "00071-0213-23", "Name": "Indium-111", "Type": "Infection Imaging", "Common_Quantity": [1, 1]}
+        ],
+        'Pathology': [
+            {"NDC": "00093-0144-98", "Name": "Fluorescein", "Type": "Tissue Staining", "Common_Quantity": [1, 1]},
+            {"NDC": "00378-0704-01", "Name": "Eosin", "Type": "Tissue Staining", "Common_Quantity": [1, 1]},
+            {"NDC": "00071-0214-23", "Name": "Rose Bengal", "Type": "Diagnostic Staining", "Common_Quantity": [1, 1]},
+            {"NDC": "00093-0145-98", "Name": "Acriflavine", "Type": "Tissue Staining", "Common_Quantity": [1, 1]}
+        ],
+        'Clinical Laboratory Medicine': [
+            {"NDC": "00093-0146-98", "Name": "Phenolsulfonphthalein", "Type": "pH Indicator", "Common_Quantity": [1, 1]},
+            {"NDC": "00378-0705-01", "Name": "Sulfobromophthalein", "Type": "Liver Function", "Common_Quantity": [1, 1]},
+            {"NDC": "00071-0215-23", "Name": "Aminohippuric Acid", "Type": "Renal Function", "Common_Quantity": [1, 1]},
+            {"NDC": "00093-0147-98", "Name": "Tolbutamide", "Type": "Glucose Testing", "Common_Quantity": [1, 1]}
+        ],
+        'Medical Genetics': [
+            {"NDC": "00093-0148-98", "Name": "Flutemetamol F-18", "Type": "Amyloid Imaging", "Common_Quantity": [1, 1]},
+            {"NDC": "00378-0706-01", "Name": "Florbetapir F-18", "Type": "Amyloid Imaging", "Common_Quantity": [1, 1]},
+            {"NDC": "00071-0216-23", "Name": "Gadopiclenol", "Type": "Genetic Disease", "Common_Quantity": [1, 1]}
+        ]
+}
+,
+    'Emergency and Critical Care': {
+        'Emergency Medicine': [
+            {"NDC": "00093-0150-98", "Name": "Ondansetron", "Type": "Antiemetic", "Common_Quantity": [1, 4]},
+            {"NDC": "00378-0710-01", "Name": "Normal Saline", "Type": "IV Fluid", "Common_Quantity": [1, 4]},
+            {"NDC": "00071-0220-23", "Name": "Ketorolac", "Type": "NSAID", "Common_Quantity": [1, 2]},
+            {"NDC": "00093-0151-98", "Name": "Morphine", "Type": "Opioid", "Common_Quantity": [1, 4]},
+            {"NDC": "00378-0711-01", "Name": "Hydromorphone", "Type": "Opioid", "Common_Quantity": [1, 4]},
+            {"NDC": "00071-0221-23", "Name": "Promethazine", "Type": "Antiemetic", "Common_Quantity": [1, 2]},
+            {"NDC": "00093-0152-98", "Name": "Albuterol", "Type": "Bronchodilator", "Common_Quantity": [1, 2]},
+            {"NDC": "00378-0712-01", "Name": "Epinephrine", "Type": "Sympathomimetic", "Common_Quantity": [1, 2]}
+        ],
+        'Critical Care Medicine': [
+            {"NDC": "00093-0153-98", "Name": "Norepinephrine", "Type": "Vasopressor", "Common_Quantity": [1, 4]},
+            {"NDC": "00378-0713-01", "Name": "Vasopressin", "Type": "Vasopressor", "Common_Quantity": [1, 2]},
+            {"NDC": "00071-0222-23", "Name": "Phenylephrine", "Type": "Vasopressor", "Common_Quantity": [1, 4]},
+            {"NDC": "00093-0154-98", "Name": "Dopamine", "Type": "Vasopressor", "Common_Quantity": [1, 4]},
+            {"NDC": "00378-0714-01", "Name": "Propofol", "Type": "Sedative", "Common_Quantity": [1, 4]},
+            {"NDC": "00071-0223-23", "Name": "Dexmedetomidine", "Type": "Sedative", "Common_Quantity": [1, 2]},
+            {"NDC": "00093-0155-98", "Name": "Midazolam", "Type": "Sedative", "Common_Quantity": [1, 4]},
+            {"NDC": "00378-0715-01", "Name": "Fentanyl", "Type": "Opioid", "Common_Quantity": [1, 4]}
+        ],
+        'Trauma Surgery': [
+            {"NDC": "00093-0156-98", "Name": "Tranexamic Acid", "Type": "Antifibrinolytic", "Common_Quantity": [1, 2]},
+            {"NDC": "00378-0716-01", "Name": "Etomidate", "Type": "Sedative", "Common_Quantity": [1, 2]},
+            {"NDC": "00071-0224-23", "Name": "Ketamine", "Type": "Dissociative", "Common_Quantity": [1, 2]},
+            {"NDC": "00093-0157-98", "Name": "Rocuronium", "Type": "Paralytic", "Common_Quantity": [1, 2]},
+            {"NDC": "00378-0717-01", "Name": "Succinylcholine", "Type": "Paralytic", "Common_Quantity": [1, 2]},
+            {"NDC": "00071-0225-23", "Name": "Mannitol", "Type": "Osmotic Diuretic", "Common_Quantity": [1, 2]}
+        ],
+        'Acute Care Medicine': [
+            {"NDC": "00093-0158-98", "Name": "Methylprednisolone", "Type": "Corticosteroid", "Common_Quantity": [1, 2]},
+            {"NDC": "00378-0718-01", "Name": "Furosemide", "Type": "Loop Diuretic", "Common_Quantity": [1, 4]},
+            {"NDC": "00071-0226-23", "Name": "Pantoprazole", "Type": "PPI", "Common_Quantity": [1, 2]},
+            {"NDC": "00093-0159-98", "Name": "Ceftriaxone", "Type": "Antibiotic", "Common_Quantity": [1, 2]},
+            {"NDC": "00378-0719-01", "Name": "Vancomycin", "Type": "Antibiotic", "Common_Quantity": [1, 2]},
+            {"NDC": "00071-0227-23", "Name": "Insulin Regular", "Type": "Hormone", "Common_Quantity": [1, 2]}
+        ]
+}
+,
+    'Special Senses':{
+        'Ophthalmology': [
+            {"NDC": "00093-0160-98", "Name": "Latanoprost", "Type": "Prostaglandin Analog", "Common_Quantity": [1, 2]},
+            {"NDC": "00378-0720-01", "Name": "Bimatoprost", "Type": "Prostaglandin Analog", "Common_Quantity": [1, 2]},
+            {"NDC": "00071-0230-23", "Name": "Timolol", "Type": "Beta Blocker", "Common_Quantity": [1, 2]},
+            {"NDC": "00093-0161-98", "Name": "Brimonidine", "Type": "Alpha Agonist", "Common_Quantity": [1, 2]},
+            {"NDC": "00378-0721-01", "Name": "Dorzolamide", "Type": "Carbonic Anhydrase Inhibitor", "Common_Quantity": [1, 2]},
+            {"NDC": "00071-0231-23", "Name": "Aflibercept", "Type": "VEGF Inhibitor", "Common_Quantity": [1, 1]}
+        ],
+        'Otolaryngology': [
+            {"NDC": "00093-0162-98", "Name": "Fluticasone", "Type": "Nasal Steroid", "Common_Quantity": [1, 2]},
+            {"NDC": "00378-0722-01", "Name": "Azelastine", "Type": "Antihistamine", "Common_Quantity": [1, 2]},
+            {"NDC": "00071-0232-23", "Name": "Olopatadine", "Type": "Antihistamine/Mast Cell Stabilizer", "Common_Quantity": [1, 2]},
+            {"NDC": "00093-0163-98", "Name": "Mometasone", "Type": "Nasal Steroid", "Common_Quantity": [1, 2]},
+            {"NDC": "00378-0723-01", "Name": "Ciprofloxacin", "Type": "Antibiotic", "Common_Quantity": [1, 2]}
+        ],
+        'Audiologist': [
+            {"NDC": "00093-0164-98", "Name": "Carboplatin", "Type": "Chemotherapy", "Common_Quantity": [1, 1]},
+            {"NDC": "00378-0724-01", "Name": "Cisplatin", "Type": "Chemotherapy", "Common_Quantity": [1, 1]},
+            {"NDC": "00071-0233-23", "Name": "Gentamicin", "Type": "Aminoglycoside", "Common_Quantity": [1, 2]},
+            {"NDC": "00093-0165-98", "Name": "Vancomycin", "Type": "Antibiotic", "Common_Quantity": [1, 2]},
+            {"NDC": "00378-0725-01", "Name": "Furosemide", "Type": "Loop Diuretic", "Common_Quantity": [1, 2]}
+        ],
+        'Optometry': [
+            {"NDC": "00093-0166-98", "Name": "Moxifloxacin", "Type": "Antibiotic", "Common_Quantity": [1, 2]},
+            {"NDC": "00378-0726-01", "Name": "Prednisolone", "Type": "Steroid", "Common_Quantity": [1, 2]},
+            {"NDC": "00071-0234-23", "Name": "Cyclopentolate", "Type": "Mydriatic", "Common_Quantity": [1, 1]},
+            {"NDC": "00093-0167-98", "Name": "Tropicamide", "Type": "Mydriatic", "Common_Quantity": [1, 1]},
+            {"NDC": "00378-0727-01", "Name": "Proparacaine", "Type": "Anesthetic", "Common_Quantity": [1, 1]}
+        ]
+}
+}
+
+def generate_prescription_patterns(num_prescriptions=1000000):
+    current_date = datetime(2025, 1, 9)
+    prescriptions = []
+    patient_history = {}
+    
+    # Business hours distribution
+    business_hours = list(range(8, 18))
+    hour_weights = [3, 5, 8, 10, 12, 10, 12, 10, 8, 5]
+    
+    print(f"Generating {num_prescriptions} prescriptions...")
+    
+    for i in range(num_prescriptions):
+        if i % 100000 == 0:
+            print(f"Generated {i} prescriptions...")
+            
+        # Select random provider
+        provider = active_providers.sample(1).iloc[0]
+        
+        try:
+            specialty = provider['Specialty']
+            specialty_category = provider['Specialty_Category']
+            
+            # Match drug to provider specialty
+            if specialty_category in drugs and specialty in drugs[specialty_category]:
+                drug = random.choice(drugs[specialty_category][specialty])
+            else:
+                drug = random.choice(drugs['Primary Care']['Family Medicine'])
+                
+        except (KeyError, IndexError):
+            specialty = 'Family Medicine'
+            specialty_category = 'Primary Care'
+            drug = random.choice(drugs['Primary Care']['Family Medicine'])
+        
+        # Generate prescription details
+        patient_id = f"PAT{random.randint(1000000, 9999999)}"
+        
+        # Generate datetime
+        prescription_date = current_date - timedelta(days=random.randint(0, 365))
+        hour = random.choices(business_hours[:len(hour_weights)], weights=hour_weights)[0]
+        minute = random.randint(0, 59)
+        prescription_datetime = prescription_date.replace(hour=hour, minute=minute)
+        
+        # Generate prescription specifics based on drug type
+        quantity, days_supply, dosing_frequency, instructions, refills = generate_rx_details(drug)
+        
+        prescriptions.append({
+            "Prescription_ID": f"RX{random.randint(10000000, 99999999)}",
+            "Prescriber_NPI": provider['NPI'],
+            "Patient_ID": patient_id,
+            "Drug_NDC": drug['NDC'],
+            "Drug_Name": drug['Name'],
+            "Drug_Type": drug['Type'],
+            "Prescription_DateTime": prescription_datetime.strftime("%Y-%m-%d %H:%M"),
+            "Quantity_Prescribed": quantity,
+            "Days_Supply": days_supply,
+            "Fill_Location_ZIP": provider['ZIP'],
+            "Prescription_Type": random.choices(["New", "Refill"], weights=[30, 70])[0],
+            "Dosing_Frequency": dosing_frequency,
+            "Instructions": instructions,
+            "Refills_Remaining": refills,
+            "DAW_Code": random.choices([0, 1, 2], weights=[80, 15, 5])[0],
+            "Prior_Authorization": random.choices(["Yes", "No"], weights=[10, 90])[0],
+            "Insurance_Type": random.choice(["Commercial", "Medicare", "Medicaid", "Cash"]),
+            "Copay_Amount": random.randint(0, 50) * 5,
+            "Prescriber_Specialty": specialty
+        })
+    
+    return pd.DataFrame(prescriptions)
+
+def generate_rx_details(drug):
+    """Helper function to generate prescription details"""
+    if drug['Type'] == "Antibiotic":
+        quantity = random.choice([14, 20, 28, 30])
+        days_supply = quantity
+        dosing_frequency = random.choice(["BID", "TID", "QID"])
+        instructions = f"Take {dosing_frequency} with food for {days_supply} days"
+        refills = 0
+    elif "Controlled" in drug['Type']:
+        quantity = random.choice([30, 60, 90])
+        days_supply = 30
+        dosing_frequency = random.choice(["QD", "BID", "TID"])
+        instructions = f"Take {dosing_frequency} as directed"
+        refills = random.randint(0, 5)
+    else:
+        quantity = random.randint(drug['Common_Quantity'][0], drug['Common_Quantity'][1])
+        days_supply = 30 if quantity >= 30 else quantity
+        dosing_frequency = random.choice(["QD", "BID"])
+        instructions = f"Take {dosing_frequency} as directed"
+        refills = random.randint(0, 11)
+    
+    return quantity, days_supply, dosing_frequency, instructions, refills
+
+# Generate and save the dataset
+try:
+    prescriptions_df = generate_prescription_patterns()
+    prescriptions_df.to_csv("C:/Program Files/Excel Files/Prescriptions.csv", index=False)
+    print("Successfully generated prescription patterns dataset")
+except Exception as e:
+    print(f"Error generating prescriptions: {e}")
