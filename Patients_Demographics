@@ -1,0 +1,98 @@
+import pandas as pd
+import random
+from datetime import datetime, timedelta
+import numpy as np
+
+# Load existing datasets
+try:
+    hcp_df = pd.read_excel("C:/Program Files/Excel Files/Healthcare_Provider_Demographics.xlsx")
+    prescriptions_df = pd.read_csv("C:/Program Files/Excel Files/Prescriptions.csv")
+    claims_df = pd.read_csv("C:/Program Files/Excel Files/Claims_Reimbursement.csv")
+except Exception as e:
+    print(f"Error loading datasets: {e}")
+    exit()
+
+def generate_patient_demographics():
+    current_date = datetime(2025, 1, 9)
+    patients = []
+    
+    # Get unique patient IDs from prescriptions
+    unique_patients = prescriptions_df['Patient_ID'].unique()
+    print(f"Generating demographics for {len(unique_patients)} patients...")
+    
+    for patient_id in unique_patients:
+        # Get patient's prescriptions and primary provider
+        patient_prescriptions = prescriptions_df[prescriptions_df['Patient_ID'] == patient_id]
+        primary_provider = patient_prescriptions['Prescriber_NPI'].mode().iloc[0]
+        provider_info = hcp_df[hcp_df['NPI'] == primary_provider].iloc[0]
+        
+        # Generate demographics
+        age = random.randint(18, 90)
+        gender = random.choice(['Male', 'Female'])
+        race_ethnicity = random.choices(
+            ['White', 'Black', 'Hispanic', 'Asian', 'Arab', 'Hindu', 'French'],
+            weights=[30, 22, 10, 10, 11, 13, 4]
+        )[0]
+        
+        # Generate health metrics
+        bmi = round(random.uniform(18.5, 45.0), 1)
+        systolic = random.randint(90, 180)
+        diastolic = random.randint(60, 110)
+        
+        # Generate chronic conditions
+        num_conditions = random.choices([0, 1, 2, 3, 4], weights=[40, 30, 15, 10, 5])[0]
+        conditions = random.sample([
+            'Hypertension', 'Diabetes', 'COPD', 'Asthma', 'Depression',
+            'Anxiety', 'Obesity', 'Heart Disease', 'Arthritis'
+        ], num_conditions)
+        
+        # Calculate risk scores
+        risk_score = min(100, len(conditions) * 15 + random.randint(10, 30))
+        
+        patients.append({
+            "Patient_ID": patient_id,
+            "Primary_Provider_NPI": primary_provider,
+            "Insurance_Member_ID": f"MEM{random.randint(100000, 999999)}",
+            "Age": age,
+            "Gender": gender,
+            "ZIP_Code": provider_info['ZIP'],
+            "Primary_Language": random.choices(
+                ['English', 'Spanish', 'Mandarin', 'Arabic', 'Hindi', 'French'],
+                weights=[60, 17, 3, 8, 10, 2]
+            )[0],
+            "Race_Ethnicity": race_ethnicity,
+            "Marital_Status": random.choice(['Single', 'Married', 'Divorced', 'Widowed']),
+            "Chronic_Conditions": ', '.join(conditions),
+            "Risk_Score": risk_score,
+            "BMI": bmi,
+            "Smoking_Status": random.choices(['Never', 'Former', 'Current'], weights=[60, 25, 15])[0],
+            "Blood_Pressure": f"{systolic}/{diastolic}",
+            "Last_Annual_Visit": (current_date - timedelta(days=random.randint(0, 365))).strftime("%Y-%m-%d"),
+            "ER_Visits_Last_12Mo": random.choices([0, 1, 2, 3, 4], weights=[70, 15, 8, 5, 2])[0],
+            "Hospitalizations_Last_12Mo": random.choices([0, 1, 2], weights=[85, 12, 3])[0],
+            "Total_Prescriptions": len(patient_prescriptions),
+            "Medication_Adherence": random.randint(60, 100),
+            "No_Show_Rate": random.randint(0, 30),
+            "Insurance_Type": random.choice(['Commercial', 'Medicare', 'Medicaid', 'Self-Pay']),
+            "Coverage_Start_Date": (current_date - timedelta(days=random.randint(0, 1825))).strftime("%Y-%m-%d"),
+            "Deductible_Amount": random.choice([0, 500, 1000, 2000, 3000, 5000]),
+            "Out_of_Pocket_Max": random.choice([3000, 5000, 7500, 8500]),
+            "Health_Outcomes_Score": random.randint(50, 100),
+            "Quality_Metrics_Met": random.randint(3, 10),
+            "Care_Gaps": random.randint(0, 5),
+            "Readmission_Risk": random.choices(['Low', 'Medium', 'High'], weights=[70, 20, 10])[0]
+        })
+        
+        if len(patients) % 10000 == 0:
+            print(f"Generated {len(patients)} patient records...")
+    
+    return pd.DataFrame(patients)
+
+# Generate and save the dataset
+try:
+    patients_df = generate_patient_demographics()
+    patients_df.to_excel("D:/Excel Stuff/PatientDemographic.xlsx", index=False)
+    print("Successfully generated patient demographics dataset")
+    print(f"Total patients: {len(patients_df)}")
+except Exception as e:
+    print(f"Error generating patient data: {e}")
