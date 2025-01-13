@@ -1,0 +1,115 @@
+import pandas as pd
+import random
+
+#defined the ethnic_names dictionary
+ethnic_names = {
+    'Hindu': {
+        'male_names': ['Arjun', 'Arun', 'Rohit', 'Vijay', 'Rahul', 'Amit', 'Suresh', 'Rajesh', 'Ramesh', 'Sanjay', 'Ajay', 'Vikram', 'Deepak', 'Prakash', 'Anil'],
+        'female_names': ['Priya', 'Neha', 'Anjali', 'Pooja', 'Divya', 'Meera', 'Kavita', 'Sunita', 'Anita', 'Rekha', 'Kiran', 'Shanti', 'Uma', 'Lakshmi', 'Radha'],
+        'last_names': ['Patel', 'Shah', 'Kumar', 'Singh', 'Sharma', 'Verma', 'Gupta', 'Malhotra', 'Reddy', 'Kapoor', 'Joshi', 'Rao', 'Mehta', 'Chopra', 'Desai']
+    },
+    'White': {
+        'male_names': ['James', 'William', 'Henry', 'George', 'Edward', 'Charles', 'Thomas', 'Oliver', 'Jack', 'Harry', 'Arthur', 'Benjamin', 'Theodore', 'Alexander', 'Daniel'],
+        'female_names': ['Emma', 'Charlotte', 'Elizabeth', 'Victoria', 'Alice', 'Grace', 'Florence', 'Eleanor', 'Lucy', 'Margaret', 'Sarah', 'Katherine', 'Rose', 'Caroline', 'Abigail'],
+        'last_names': ['Smith', 'Jones', 'Williams', 'Taylor', 'Brown', 'Davies', 'Evans', 'Wilson', 'Thomas', 'Roberts', 'Johnson', 'Lewis', 'Walker', 'Robinson', 'Wood']
+    },
+    'Black': {
+        'male_names': ['Jamal', 'DeShawn', 'Marcus', 'Tyrone', 'Darnell', 'Terrell', 'Malik', 'Trevon', 'DeAndre', 'Andre', 'Darryl', 'Malcolm', 'Isaiah', 'Jalen', 'Xavier'],
+        'female_names': ['Aaliyah', 'Latoya', 'Ebony', 'Shaniqua', 'Imani', 'Shanice', 'Destiny', 'Asia', 'Keisha', 'Kiara', 'Jazmine', 'Diamond', 'Trinity', 'Aliyah', 'Jada'],
+        'last_names': ['Washington', 'Jefferson', 'Jackson', 'Banks', 'Freeman', 'Coleman', 'Douglas', 'Brooks', 'Howard', 'Jenkins', 'Perry', 'Powell', 'Hughes', 'Long', 'Patterson']
+    },
+    'Asian': {
+        'male_names': ['Wei', 'Ming', 'Jin', 'Kai', 'Hiroshi', 'Takashi', 'Jun', 'Seung', 'Jae', 'Young', 'Yong', 'Tao', 'Feng', 'Zhong', 'Akira'],
+        'female_names': ['Mei', 'Yuki', 'Sakura', 'Ling', 'Xia', 'Ji-eun', 'Soo-jin', 'Yoon', 'Hana', 'Eun', 'Lin', 'Hui', 'Jing', 'Yuan', 'Miyu'],
+        'last_names': ['Kim', 'Lee', 'Wang', 'Chen', 'Zhang', 'Liu', 'Yang', 'Huang', 'Wu', 'Zhou', 'Park', 'Choi', 'Tanaka', 'Sato', 'Suzuki']
+    },
+    'Arab': {
+        'male_names': ['Mohammed', 'Ahmad', 'Ali', 'Hassan', 'Ibrahim', 'Omar', 'Yusuf', 'Khalid', 'Mahmoud', 'Samir', 'Tariq', 'Rashid', 'Karim', 'Jamal', 'Malik'],
+        'female_names': ['Fatima', 'Aisha', 'Maryam', 'Zainab', 'Noor', 'Layla', 'Amira', 'Rania', 'Hana', 'Leila', 'Yasmin', 'Sara', 'Nadia', 'Samira', 'Dalia'],
+        'last_names': ['Al-Sayed', 'Rahman', 'Abdullah', 'Hussein', 'Hassan', 'Ali', 'Ahmed', 'Mahmoud', 'Khalil', 'Ibrahim', 'Malik', 'Saleh', 'Nasser', 'Mustafa', 'Hamzah']
+    },
+    'French': {
+        'male_names': ['Jean', 'Pierre', 'Louis', 'François', 'Philippe', 'Michel', 'Antoine', 'Henri', 'Marcel', 'André', 'Claude', 'Étienne', 'Bernard', 'René', 'Jacques'],
+        'female_names': ['Marie', 'Sophie', 'Isabelle', 'Catherine', 'Claire', 'Anne', 'Céline', 'Sylvie', 'Julie', 'Louise', 'Françoise', 'Hélène', 'Marguerite', 'Jeanne', 'Simone'],
+        'last_names': ['Martin', 'Bernard', 'Dubois', 'Thomas', 'Robert', 'Richard', 'Petit', 'Durand', 'Leroy', 'Moreau', 'Simon', 'Laurent', 'Lefebvre', 'Michel', 'Garcia']
+    },
+    'Hispanic': {
+        'male_names': ['José', 'Antonio', 'Manuel', 'Francisco', 'Juan', 'Miguel', 'Carlos', 'Javier', 'David', 'Rafael', 'Fernando', 'Luis', 'Pablo', 'Alberto', 'Pedro'],
+        'female_names': ['María', 'Carmen', 'Ana', 'Isabel', 'Laura', 'Cristina', 'Lucía', 'Elena', 'Sara', 'Rosa', 'Paula', 'Beatriz', 'Silvia', 'Teresa', 'Patricia'],
+        'last_names': ['García', 'Rodríguez', 'González', 'Fernández', 'López', 'Martínez', 'Sánchez', 'Pérez', 'Gómez', 'Martin', 'Jiménez', 'Ruiz', 'Hernández', 'Díaz', 'Moreno']
+    }
+}
+
+
+df = pd.read_excel("D:/Excel Stuff/Patient_Names.xlsx")
+
+
+ #### Create Realistic Standard for Race, Gender and Primary Languages to match
+
+def generate_ethnic_name(race_ethnicity, gender, primary_language):
+    if race_ethnicity == "Arab" and primary_language == "Arabic":
+        if gender == "Male":
+            first_name = random.choice(ethnic_names['Arab']['male_names'])
+        else:
+            first_name = random.choice(ethnic_names['Arab']['female_names'])
+        last_name = random.choice(ethnic_names['Arab']['last_names'])
+    elif race_ethnicity == "White" and primary_language == "English":
+        if gender == "Male":
+            first_name = random.choice(ethnic_names['White']['male_names'])
+        else:
+            first_name = random.choice(ethnic_names['White']['female_names'])
+        last_name = random.choice(ethnic_names['White']['last_names'])
+    elif race_ethnicity == "Black" and primary_language == "English":
+        if gender == "Male":
+            first_name = random.choice(ethnic_names['Black']['male_names'])
+        else:
+            first_name = random.choice(ethnic_names['Black']['female_names'])
+        last_name = random.choice(ethnic_names['Black']['last_names'])
+    elif race_ethnicity == "Asian" and primary_language == "Mandarin":
+        if gender == "Male":
+            first_name = random.choice(ethnic_names['Asian']['male_names'])
+        else:
+            first_name = random.choice(ethnic_names['Asian']['female_names'])
+        last_name = random.choice(ethnic_names['Asian']['last_names'])
+    elif race_ethnicity == "Hispanic" and primary_language == "Spanish":
+        if gender == "Male":
+            first_name = random.choice(ethnic_names['Hispanic']['male_names'])
+        else:
+            first_name = random.choice(ethnic_names['Hispanic']['female_names'])
+        last_name = random.choice(ethnic_names['Hispanic']['last_names'])
+    elif race_ethnicity == "White" and primary_language == "French":
+        if gender == "Male":
+            first_name = random.choice(ethnic_names['French']['male_names'])
+        else:
+            first_name = random.choice(ethnic_names['French']['female_names'])
+        last_name = random.choice(ethnic_names['French']['last_names'])
+    elif race_ethnicity == "Hindu" and primary_language == "Hindi":
+        if gender == "Male":
+            first_name = random.choice(ethnic_names['Hindu']['male_names'])
+        else:
+            first_name = random.choice(ethnic_names['Hindu']['female_names'])
+        last_name = random.choice(ethnic_names['Hindu']['last_names'])
+    else:
+        # Default case if no match is found
+        if gender == "Male":
+            first_name = random.choice(ethnic_names['White']['male_names'])
+        else:
+            first_name = random.choice(ethnic_names['White']['female_names'])
+        last_name = random.choice(ethnic_names['White']['last_names'])
+    
+    return first_name, last_name
+
+# Apply the function row by row
+df[['First_Name', 'Last_Name']] = df.apply(
+    lambda row: pd.Series(
+        generate_ethnic_name(
+            row['race_ethnicity'], 
+            row['gender'], 
+            row['primary_language']
+        )
+    ), 
+    axis=1
+)
+
+# Save the updated DataFrame
+df.to_excel("D:/Excel Stuff/UpdatedPatient_Names.xlsx", index=False)
